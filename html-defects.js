@@ -6,537 +6,512 @@ const fs = require('fs');
 // function to check for valid characters in
 // HTML tag or attribute names
 // e.g. h1, meta, data-value
-// HTML 5 allows any character except any type of 
+// HTML 5 allows any character except any type of
 // space character, ", ', <, >, /, =, control characters,
 // and any non Unicode characters
 
 const validAttributeCharCodes = [
-	9,  // Tab
-	32, // Space
-	34, // "
-	39, // '
-	60, // <
-	62, // >
-	47, // /
-	61, // =
+  9, // Tab
+  32, // Space
+  34, // "
+  39, // '
+  60, // <
+  62, // >
+  47, // /
+  61, // =
 ];
 
-const isCharInCharCodeArray = function(c, arr) {
-	charCode = c.charCodeAt(0);
-	return (arr.indexOf(charCode) === -1) ? false : true;
-}
-assert.deepEqual(["<"].map(
-	char => isCharInCharCodeArray(char, validAttributeCharCodes)),
-	[true]
-)
+const isCharInCharCodeArray = function isCharInCharCodeArray(c, arr) {
+  const charCode = c.charCodeAt(0);
+  return !(arr.indexOf(charCode) === -1);
+};
+assert.deepEqual(['<'].map(
+  char => (isCharInCharCodeArray(char, validAttributeCharCodes)),
+),
+[true]);
 
-const isValidAttributeChar = function(c) {
-	return !isCharInCharCodeArray(c, validAttributeCharCodes);
-}
-assert.deepEqual(["a", "A", "0", "-", "_", ":", "."].map(
-	char => isValidAttributeChar(char)),
-	[true, true, true, true, true, true, true]
-)
-assert.deepEqual([" ", "	", "<", ">", "/", "=", "\'", "\""].map(
-	char => isValidAttributeChar(char)),
-	[false, false, false, false, false, false, false, false]
-)
+const isValidAttributeChar = function isValidAttributeChar(c) {
+  return !isCharInCharCodeArray(c, validAttributeCharCodes);
+};
+assert.deepEqual(['a', 'A', '0', '-', '_', ':', '.'].map(
+  char => (isValidAttributeChar(char)),
+),
+[true, true, true, true, true, true, true]);
+assert.deepEqual([' ', '\t', '<', '>', '/', '=', '\'', '"'].map(
+  char => (isValidAttributeChar(char)),
+),
+[false, false, false, false, false, false, false, false]);
 
 const whiteSpaceCharCodes = [
-	9,  // Tab
-	13, // Carriage return
-	32, // Space
-]
-const isWhiteSpaceChar = function(c) {
-	return isCharInCharCodeArray(c, whiteSpaceCharCodes);
-}
-assert.equal(isWhiteSpaceChar("	"), true)
-assert.equal(isWhiteSpaceChar("\r"), true)
+  9, // Tab
+  13, // Carriage return
+  32, // Space
+];
+const isWhiteSpaceChar = function isWhiteSpaceChar(c) {
+  return isCharInCharCodeArray(c, whiteSpaceCharCodes);
+};
+assert.equal(isWhiteSpaceChar('\t'), true);
+assert.equal(isWhiteSpaceChar('\r'), true);
 
-const isAprostrophe = function(c) {
-	return isCharInCharCodeArray(c, [34, 39])
-}
-assert.equal(isAprostrophe('"'), true)
-assert.equal(isAprostrophe("'"), true)
-assert.equal(isAprostrophe(" "), false)
+const isAprostrophe = function isAprostrophe(c) {
+  return isCharInCharCodeArray(c, [34, 39]);
+};
+assert.equal(isAprostrophe('"'), true);
+assert.equal(isAprostrophe("'"), true);
+assert.equal(isAprostrophe(' '), false);
 
 
 // Terminology:
 // HTMLCode, HTMLTag, TagName, TagAttribute, TagAttributeValue
 // HTMLTag is the <p> itself, HTMLElement is the stuff between the tags
- 
-const stripAngleBracketsFromHTMLTag = function(HTMLTag) {
-	const length = HTMLTag.length
-	return (HTMLTag[0] == '<' && HTMLTag[length - 1] == '>') ?
-		HTMLTag.slice(1, length - 1) : HTMLTag
-}
-assert.equal(stripAngleBracketsFromHTMLTag("<html>"), "html")
-assert.equal(stripAngleBracketsFromHTMLTag('<img src="abc.jpg" alt="abc" />'), 'img src="abc.jpg" alt="abc" /')
-assert.equal(stripAngleBracketsFromHTMLTag("Paragraph"), "Paragraph")
+const stripAngleBracketsFromHTMLTag = function stripAngleBracketsFromHTMLTag(HTMLTag) {
+  const { length } = HTMLTag;
+  return ((HTMLTag[0] === '<' && HTMLTag[length - 1] === '>')
+    ? HTMLTag.slice(1, length - 1)
+    : HTMLTag);
+};
+assert.equal(stripAngleBracketsFromHTMLTag('<html>'), 'html');
+assert.equal(stripAngleBracketsFromHTMLTag('<img src="abc.jpg" alt="abc" />'), 'img src="abc.jpg" alt="abc" /');
+assert.equal(stripAngleBracketsFromHTMLTag('Paragraph'), 'Paragraph');
 
-const tokenizeStrippedHTMLTag = function(strippedHTMLTag) {
-	// tokenize by parsing what's in between spaces
-	// complication arises due to legitimate spaces within strings
-	// e.g filenames src="smiley face.jpg"
-	const tokens = [];
-	let stringStack = [];
-	let buffer = "";
+const tokenizeStrippedHTMLTag = function tokenizeStrippedHTMLTag(strippedHTMLTag) {
+  // tokenize by parsing what's in between spaces
+  // complication arises due to legitimate spaces within strings
+  // e.g filenames src="smiley face.jpg"
+  const tokens = [];
+  const stringStack = [];
+  let buffer = '';
 
-	const flushBuffer = function() {
-		if (buffer.length !== 0) {
-			tokens.push(buffer);
-		}
-		buffer = "";
-	}
-	
-	const isAprostropheMatchingStackTop = function(char) {
-		return (char === stringStack[stringStack.length - 1]) ? true : false;
-	}
+  const flushBuffer = function flushBuffer() {
+    if (buffer.length !== 0) {
+      tokens.push(buffer);
+    }
+    buffer = '';
+  };
 
-	for (let char of strippedHTMLTag) {
-		char = char.toLowerCase();
-		if (isAprostrophe(char)) {
-			if (isAprostropheMatchingStackTop(char)) {
-				stringStack.pop();
-			} else {
-				if (stringStack.length === 0) {
-					stringStack.push(char);
-				}
-			}
-		}
+  const isAprostropheMatchingStackTop = function isAprostropheMatchingStackTop(char) {
+    return (char === stringStack[stringStack.length - 1]);
+  };
 
-		// if currently parsing a string
-		if (stringStack.length != 0) {
-			buffer += char;
-		} else {
+  for (let i = 0; i < strippedHTMLTag.length; i += 1) {
+    let char = strippedHTMLTag[i];
+    char = char.toLowerCase();
+    if (isAprostrophe(char)) {
+      if (isAprostropheMatchingStackTop(char)) {
+        stringStack.pop();
+      } else if (stringStack.length === 0) {
+        stringStack.push(char);
+      }
+    }
 
-			if (isWhiteSpaceChar(char)) {
-				flushBuffer();
-			} else {
-				if (char === "=" || char === "/") {
-					flushBuffer();
-					buffer += char;
-					flushBuffer();
-				} else {
-					buffer += char;
-				}
-			} 
+    // if currently parsing a string
+    if (stringStack.length !== 0) {
+      buffer += char;
+    } else if (isWhiteSpaceChar(char)) {
+      flushBuffer();
+    } else if (char === '=' || char === '/') {
+      flushBuffer();
+      buffer += char;
+      flushBuffer();
+    } else {
+      buffer += char;
+    }
+  }
+  flushBuffer();
+  return tokens;
+};
 
-		}
-	}
-	flushBuffer();
-	return tokens;
-}
-
-assert.deepEqual(tokenizeStrippedHTMLTag("html"), ["html"]);
-assert.deepEqual(tokenizeStrippedHTMLTag("/html"), ["/", "html"]);
-assert.deepEqual(tokenizeStrippedHTMLTag('meta name = "descriptions" /'), ["meta", "name", "=", '"descriptions"', "/"]);
+assert.deepEqual(tokenizeStrippedHTMLTag('html'), ['html']);
+assert.deepEqual(tokenizeStrippedHTMLTag('/html'), ['/', 'html']);
+assert.deepEqual(tokenizeStrippedHTMLTag('meta name = "descriptions" /'), ['meta', 'name', '=', '"descriptions"', '/']);
 // '=' is stripped out as a token even if there is no whitespace surrounding it
-assert.deepEqual(tokenizeStrippedHTMLTag('Meta name="descriptions" /'), ["meta", 'name', '=', '"descriptions"', "/"]);
-assert.deepEqual(tokenizeStrippedHTMLTag('img src="/test/hello 123.jpg" alt="hello" /'), ["img", 'src', '=', '"/test/hello 123.jpg"', 'alt', '=', '"hello"', '/']);
-assert.deepEqual(tokenizeStrippedHTMLTag('img src="mr. foo\'s bar.jpg" alt="mrfoosbar" /'), ['img', 'src', '=', '"mr. foo\'s bar.jpg"', 'alt', '=', '"mrfoosbar"', '/'])
+assert.deepEqual(tokenizeStrippedHTMLTag('Meta name="descriptions" /'), ['meta', 'name', '=', '"descriptions"', '/']);
+assert.deepEqual(tokenizeStrippedHTMLTag('img src="/test/hello 123.jpg" alt="hello" /'), ['img', 'src', '=', '"/test/hello 123.jpg"', 'alt', '=', '"hello"', '/']);
+assert.deepEqual(tokenizeStrippedHTMLTag('img src="mr. foo\'s bar.jpg" alt="mrfoosbar" /'), ['img', 'src', '=', '"mr. foo\'s bar.jpg"', 'alt', '=', '"mrfoosbar"', '/']);
 
-const isAngleBracket = function(c) {
-	return isCharInCharCodeArray(c, [60, 62])
-}
-assert.equal(isAngleBracket("<"), true)
-assert.equal(isAngleBracket(">"), true)
-assert.equal(isAngleBracket("="), false)
+const isAngleBracket = function isAngleBracket(c) {
+  return isCharInCharCodeArray(c, [60, 62]);
+};
+assert.equal(isAngleBracket('<'), true);
+assert.equal(isAngleBracket('>'), true);
+assert.equal(isAngleBracket('='), false);
 
-const extractHTMLTagsFromHTMLStream = function(readableStream) {
-	
-	let stream = ""
+const extractHTMLTagsFromHTMLStream = function extractHTMLTagsFromHTMLStream(readableStream) {
+  let stream = '';
 
-	const extractHTMLTags = function(data) {
-		HTMLTags = [];
-		isHTMLTag = false;
-		buffer = "";
+  const extractHTMLTags = function extractHTMLTags() {
+    const HTMLTags = [];
+    let isHTMLTag = false;
+    let buffer = '';
 
-		const flushBuffer = function() {
-			if (buffer.length !== 0) {
-				HTMLTags.push(buffer);
-			}
-			buffer = "";
-		}
+    const flushBuffer = function flushBuffer() {
+      if (buffer.length !== 0) {
+        HTMLTags.push(buffer);
+      }
+      buffer = '';
+    };
 
-		for (let char of stream) {
-			if (isAngleBracket(char)) {
-				isHTMLTag = (!isHTMLTag) ? true : false;
-			}
-			if (isHTMLTag) {
-				buffer += char;
-			} else {
-				if (char === ">") {
-					buffer += char;
-				}
-				flushBuffer();
-			}
-		}
-		return HTMLTags;
-	}
+    for (let i = 0; i < stream.length; i += 1) {
+      const char = stream[i];
+      if (isAngleBracket(char)) {
+        isHTMLTag = (!isHTMLTag);
+      }
+      if (isHTMLTag) {
+        buffer += char;
+      } else {
+        if (char === '>') {
+          buffer += char;
+        }
+        flushBuffer();
+      }
+    }
+    return HTMLTags;
+  };
 
-	if (typeof readableStream === "string") {
-		stream = readableStream;
-		return extractHTMLTags(stream);
-	} else {
-		// file stream or writable stream
-		readableStream.setEncoding('utf8');
-		readableStream.on('data', (chunk) => {
-			stream  += chunk;
-		})
+  if (typeof readableStream === 'string') {
+    stream = readableStream;
+    return extractHTMLTags(stream);
+  }
 
-		readableStream.on('end', () => {
-			return extractHTMLTags(stream);
-		})
-	}
+  // file stream or writable stream
+  readableStream.setEncoding('utf8');
+  readableStream.on('data', (chunk) => {
+    stream += chunk;
+  });
+  readableStream.on('end', () => extractHTMLTags(stream));
+};
+assert.deepEqual(extractHTMLTagsFromHTMLStream('<html></html>'), ['<html>', '</html>']);
+assert.deepEqual(extractHTMLTagsFromHTMLStream('<html><head><meta charset="utf-8"></head></html>'), ['<html>', '<head>', '<meta charset="utf-8">', '</head>', '</html>']);
 
-}
-assert.deepEqual(extractHTMLTagsFromHTMLStream("<html></html>"), ["<html>", "</html>"])
-assert.deepEqual(extractHTMLTagsFromHTMLStream('<html><head><meta charset="utf-8"></head></html>'), ["<html>", "<head>", '<meta charset="utf-8">', "</head>", "</html>"])
+const parseTokenizedHTMLTag = function parseTokenizedHTMLTag(tokenizedHTMLTag) {
+  const parsedHTMLObj = {};
+  const closingTagTokenPosition = tokenizedHTMLTag.indexOf('/');
 
-const parseTokenizedHTMLTag = function(tokenizedHTMLTag) {
-	let parsedHTMLObj = {};
-	let closingTagTokenPosition = tokenizedHTMLTag.indexOf('/');
+  if (closingTagTokenPosition !== -1) {
+    if (closingTagTokenPosition === 0) {
+      parsedHTMLObj.closingTag = true;
+    } else if (closingTagTokenPosition === tokenizedHTMLTag.length - 1) {
+      parsedHTMLObj.selfClosingTag = true;
+    }
 
-	if (closingTagTokenPosition !== -1) {
-		if (closingTagTokenPosition === 0) {
-			parsedHTMLObj["closingTag"] = true;
-		} else if (closingTagTokenPosition === tokenizedHTMLTag.length - 1) {
-			parsedHTMLObj["selfClosingTag"] = true;
-		}
+    tokenizedHTMLTag.splice(closingTagTokenPosition, 1);
+  }
 
-		tokenizedHTMLTag.splice(closingTagTokenPosition, 1)
-	}
+  [parsedHTMLObj.elementName] = tokenizedHTMLTag;
+  tokenizedHTMLTag.splice(0, 1);
 
-	parsedHTMLObj['elementName'] = tokenizedHTMLTag[0];
-	tokenizedHTMLTag.splice(0, 1)
+  // attributes with values e.g. <img src="abc.jpg">
+  parsedHTMLObj.attributes = {};
+  while (tokenizedHTMLTag.indexOf('=') !== -1) {
+    if (!('attributes' in parsedHTMLObj)) {
+      parsedHTMLObj.attributes = {};
+    }
+    const equalsSignIndex = tokenizedHTMLTag.indexOf('=');
+    const attributeName = tokenizedHTMLTag[equalsSignIndex - 1];
+    const attributeValue = tokenizedHTMLTag[equalsSignIndex + 1];
+    parsedHTMLObj.attributes[attributeName] = attributeValue;
+    tokenizedHTMLTag.splice(equalsSignIndex - 1, 3);
+  }
+  // attributes without values e.g. <input disabled>
+  if (tokenizedHTMLTag.length !== 0) {
+    tokenizedHTMLTag.forEach((tag) => {
+      parsedHTMLObj.attributes[tag] = null;
+    });
+    // parsedHTMLObj['attributesWithoutValues'] = tokenizedHTMLTag;
+  }
+  return parsedHTMLObj;
+};
+assert.deepEqual(parseTokenizedHTMLTag(['img', 'src', '=', '"/test/hello 123.jpg"', 'alt', '=', '"hello"', '/']),
+  {
+    elementName: 'img',
+    attributes: {
+      src: '"/test/hello 123.jpg"',
+      alt: '"hello"',
+    },
+    selfClosingTag: true,
+  });
+assert.deepEqual(parseTokenizedHTMLTag(['div', 'data-modal-target', 'class', '=', 'dataset']),
+  {
+    elementName: 'div',
+    attributes: {
+      class: 'dataset',
+      'data-modal-target': null,
+    },
+  });
 
-	// attributes with values e.g. <img src="abc.jpg">
-	parsedHTMLObj['attributes'] = {};
-	while (tokenizedHTMLTag.indexOf('=') != -1) {
-		if (!('attributes' in parsedHTMLObj)) {
-			parsedHTMLObj['attributes'] = {}
-		}
-		let equalsSignIndex = tokenizedHTMLTag.indexOf('=');
-		let attributeName = tokenizedHTMLTag[equalsSignIndex - 1];
-		let attributeValue = tokenizedHTMLTag[equalsSignIndex + 1];
-		parsedHTMLObj['attributes'][attributeName] = attributeValue;
-		tokenizedHTMLTag.splice(equalsSignIndex - 1, 3);
-	}
-	// attributes without values e.g. <input disabled>
-	if (tokenizedHTMLTag.length !== 0) {
-		tokenizedHTMLTag.forEach(tag => parsedHTMLObj['attributes'][tag] = null)
-		// parsedHTMLObj['attributesWithoutValues'] = tokenizedHTMLTag;
-	}
-	
-	return parsedHTMLObj;
-}
-assert.deepEqual(parseTokenizedHTMLTag(
-	["img", 'src', '=', '"/test/hello 123.jpg"', 'alt', '=', '"hello"', '/']
-), {
-	"elementName": "img",
-	"attributes": {
-		"src": '"/test/hello 123.jpg"',
-		"alt": '"hello"'
-	},
-	"selfClosingTag": true,
-})
-assert.deepEqual(parseTokenizedHTMLTag(
-	["div", "data-modal-target", "class", "=", "dataset"]
-), {
-	"elementName": "div",
-	"attributes": {
-		"class": 'dataset',
-		"data-modal-target": null,
-	},
-})
+const convertStreamToParsedHTMLTags = function convertStreamToParsedHTMLTags(stream) {
+  const parsedHTMLTags = extractHTMLTagsFromHTMLStream(stream)
+    .map(tag => stripAngleBracketsFromHTMLTag(tag))
+    .map(tag => tokenizeStrippedHTMLTag(tag))
+    .map(tag => parseTokenizedHTMLTag(tag));
 
-const convertStreamToParsedHTMLTags = function(stream) {
-	parsedHTMLTags = extractHTMLTagsFromHTMLStream(stream)
-		.map((tag) => stripAngleBracketsFromHTMLTag(tag))
-		.map((tag) => tokenizeStrippedHTMLTag(tag))
-		.map((tag) => parseTokenizedHTMLTag(tag));
-	
-	return parsedHTMLTags;
-}
+  return parsedHTMLTags;
+};
 assert.deepEqual(convertStreamToParsedHTMLTags('<html></html>'), [{
-	'elementName': 'html',
-	'attributes': {},
-},{
-	'elementName': 'html',
-	'closingTag': true,
-	'attributes': {},
-}])
+  elementName: 'html',
+  attributes: {},
+}, {
+  elementName: 'html',
+  closingTag: true,
+  attributes: {},
+}]);
 
 // Use the strategy pattern for input, output, rules
 class RuleChecker {
+  setRule(rule) {
+    this.rule = rule;
+  }
 
-	setRule(rule) {
-		this.rule = rule;
-	}
-
-	runRule(input, options) {
-		return this.rule.checkRule(input, options);
-	}
+  runRule(input, options) {
+    return this.rule.checkRule(input, options);
+  }
 }
 
 class TagsWithoutAttributesRule {
-	
-	checkRule(input, options) {
-		
-		let output = "";
-		
-		output += `Checking "tags without attributes" rule:\n`;
+  checkRule(input, options) {
+    let output = '';
 
-		for (let option of options) {
-			for (let elementName of Object.keys(option)) {
-				let attributeName = option[elementName];
-				let defectCount = input.filter((tag) => tag['elementName'] === elementName)
-					.filter((tag) => !(Object.keys(tag).includes('closingTag')))
-					.filter((tag) => !(Object.keys(tag['attributes']).includes(attributeName)))
-					.length
+    output += `Checking 'tags without attributes' rule:\n`;
 
-				if (defectCount !== 0) {
-					output += `<${elementName}> tags without ${attributeName} attribute: ${defectCount}\n`
-				}
+    for (const option of options) {
+      for (const elementName of Object.keys(option)) {
+        const attributeName = option[elementName];
+        const defectCount = input.filter(tag => (tag.elementName === elementName))
+          .filter(tag => !(Object.keys(tag).includes('closingTag')))
+          .filter(tag => !(Object.keys(tag.attributes).includes(attributeName)))
+          .length;
 
-			}
-		}
-		return output;
-	}
-
+        if (defectCount !== 0) {
+          output += `<${elementName}> tags without ${attributeName} attribute: ${defectCount}\n`;
+        }
+      }
+    }
+    return output;
+  }
 }
 
 
 class HeaderWithoutTagsRule {
-	
-	checkRule(input, options) {
-		
-		let output = "";
-		const surroundingTag = "head";
 
-		output += `Checking "header without tags" rule:\n`;
+  checkRule(input, options) {
 
-		const filterElementsWithinTag = function(input, tagName) {
-			// filter out elements inside head tag
-			// assuming that there is only one head tag
-			const headTagStartIndex = input.findIndex(tag => tag['elementName'] === tagName)
-			const headTagEndIndex = input.findIndex(tag => (tag['elementName'] === tagName) && tag['closingTag'] === true)
-			input = input.slice(headTagStartIndex + 1, headTagEndIndex)
-			return input
-		}
-		input = filterElementsWithinTag(input, surroundingTag)
+    let output = '';
+    const surroundingTag = 'head';
 
-		for (let option of options) {
-			for (let elementName of Object.keys(option)) {
-				let attributeRequired = Object.keys(option[elementName])[0];
-				let attributeValueRequired = option[elementName][attributeRequired];
-				let attributeRequiredCount = input.filter(tag => 
-					tag['elementName'] === elementName)
-					.filter(tag => {
-						if (tag['attributes'][attributeRequired] !== undefined) {
-							return tag['attributes'][attributeRequired] === attributeValueRequired;
-						} else {
-							return false
-						}
-					}
-					)
-					.length
+    output += `Checking "header without tags" rule:\n`;
 
-				if (attributeRequiredCount === 0) {
-					output += `Header tag does not have <${elementName}${attributeRequired ? ` ${attributeRequired}=${attributeValueRequired}` : ''}>\n`
-				}
-			}
-		}
-		return output;
-	}
+    const filterElementsWithinTag = function filterElementsWithinTag(input, tagName) {
+      // filter out elements inside head tag
+      // assuming that there is only one head tag
+      const headTagStartIndex = input.findIndex(tag => (tag.elementName === tagName));
+      const headTagEndIndex = input.findIndex(tag => (tag.elementName === tagName && tag.closingTag === true));
+      input = input.slice(headTagStartIndex + 1, headTagEndIndex);
+      return input;
+    };
+    input = filterElementsWithinTag(input, surroundingTag);
+
+    for (let option of options) {
+      for (let elementName of Object.keys(option)) {
+        const attributeRequired = Object.keys(option[elementName])[0];
+        const attributeValueRequired = option[elementName][attributeRequired];
+        const attributeRequiredCount = input.filter(tag => (tag.elementName === elementName))
+          .filter((tag) => {
+            if (tag.attributes[attributeRequired] !== undefined) {
+              return tag.attributes[attributeRequired] === attributeValueRequired;
+            } else {
+              return false;
+            }
+          })
+          .length;
+
+        if (attributeRequiredCount === 0) {
+          output += `Header tag does not have <${elementName}${attributeRequired ? ` ${attributeRequired}=${attributeValueRequired}` : ''}>\n`;
+        }
+      }
+    }
+    return output;
+  }
 }
 
 const compareQuantityMap = {
-	'<': (x, y) => x < y,
-	'>': (x, y) => x > y,
-	'==': (x, y) => x === y,
-	'>=': (x, y) => x >= y,
-	'<=': (x, y) => x <= y,
-	'!=': (x, y) => x != y,
-}
+  '<': (x, y) => x < y,
+  '>': (x, y) => x > y,
+  '==': (x, y) => x === y,
+  '>=': (x, y) => x >= y,
+  '<=': (x, y) => x <= y,
+  '!=': (x, y) => x !== y,
+};
 
-const compareQuantity = function(x, y, comparisonOperator) {
-	return compareQuantityMap[comparisonOperator](x, y)
-}
-assert.equal(compareQuantity(1, 2, '<'), true)
-assert.equal(compareQuantity(5, 2, '>'), true)
-assert.equal(compareQuantity(2, 2, '>='), true)
-assert.equal(compareQuantity(2, 2, '<='), true)
-assert.equal(compareQuantity(2, 2, '=='), true)
-assert.equal(compareQuantity(5, 2, '!='), true)
+const compareQuantity = function compareQuantity(x, y, comparisonOperator) {
+  return compareQuantityMap[comparisonOperator](x, y);
+};
+assert.equal(compareQuantity(1, 2, '<'), true);
+assert.equal(compareQuantity(5, 2, '>'), true);
+assert.equal(compareQuantity(2, 2, '>='), true);
+assert.equal(compareQuantity(2, 2, '<='), true);
+assert.equal(compareQuantity(2, 2, '=='), true);
+assert.equal(compareQuantity(5, 2, '!='), true);
 
 
 class TagQuantityComparisonRule {
-	
-	checkRule(input, options) {
+  checkRule(input, options) {
 
-		let output = "";
-		let surroundingTag = "html";
+    let output = '';
+    const surroundingTag = 'html';
 
-		output += `Checking "tag quantity comparison" rule:\n`;
-		
-		const filterElementsWithinTag = function(input, tagName) {
-			// filter out elements inside head tag
-			// assuming that there is only one head tag
-			const headTagStartIndex = input.findIndex(tag => tag['elementName'] === tagName)
-			const headTagEndIndex = input.findIndex(tag => (tag['elementName'] === tagName) && tag['closingTag'] === true)
-			input = input.slice(headTagStartIndex + 1, headTagEndIndex)
-			return input
-		}
-		input = filterElementsWithinTag(input, surroundingTag)
+    output += `Checking "tag quantity comparison" rule:\n`;
 
-		for (let option of options) {
+    const filterElementsWithinTag = function filterElementsWithinTag(input, tagName) {
+      // filter out elements inside head tag
+      // assuming that there is only one head tag
+      const headTagStartIndex = input.findIndex(tag => tag.elementName === tagName);
+      const headTagEndIndex = input.findIndex(tag => (tag.elementName === tagName) && tag.closingTag === true);
+      input = input.slice(headTagStartIndex + 1, headTagEndIndex);
+      return input;
+    };
+    input = filterElementsWithinTag(input, surroundingTag);
 
-			let tagCount = input.filter(tag => (tag['elementName'] === option['elementName'] && !tag['closingTag']))
-				.length
+    for (let option of options) {
+      const tagCount = input.filter(tag => (tag.elementName === option.elementName && !tag.closingTag))
+        .length;
 
-			if (compareQuantity(tagCount, option['quantity'], option['comparisonOperator'])) {
-				output += `In <${surroundingTag}>: Quantity of <${option['elementName']}> tags is ${option['comparisonOperator']} ${option['quantity']}\n`;
-			}
-			// assert option contains keys comparisonOperator,
-			// elementName, quantity
-			// throw errors
-		}
+      if (compareQuantity(tagCount, option['quantity'], option['comparisonOperator'])) {
+        output += `In <${surroundingTag}>: Quantity of <${option.elementName}> tags is ${option['comparisonOperator']} ${option['quantity']}\n`;
+      }
+      // assert option contains keys comparisonOperator,
+      // elementName, quantity
+      // throw errors
+    }
 
-		return output;
-	}
+    return output;
+  }
 }
 
 
 class OutputHandler {
 
-	setOutputMethod(outputMethod) {
-		this.outputMethod = outputMethod;
-	}
+  setOutputMethod(outputMethod) {
+    this.outputMethod = outputMethod;
+  }
 
-	writeOutput(output, outputDestination) {
-		this.outputMethod.writeOutput(output, outputDestination);
-	}
+  writeOutput(output, outputDestination) {
+    this.outputMethod.writeOutput(output, outputDestination);
+  }
 }
 
 class ConsoleOutputMethod {
 
-	writeOutput(output, outputDestination) {
-		console.log(output)
-	}
-
+  writeOutput(output, outputDestination) {
+    console.log(output);
+  }
 }
 
 class FileOutputMethod {
 
-	writeOutput(output, outputDestination) {
-		fs.writeFile(outputDestination, output, (err) => {
-			if (err) throw err;
-			console.log('File saved.')
-		})
-	}
-
+  writeOutput(output, outputDestination) {
+    fs.writeFile(outputDestination, output, (err) => {
+      if (err) throw err;
+      console.log('File saved.');
+    });
+  }
 }
 
 class StreamOutputMethod {
-
-	writeOutput(output, outputDestination) {
-		outputDestination.write(output);
-	}
-
+  writeOutput(output, outputDestination) {
+    outputDestination.write(output);
+  }
 }
 
 class InputHandler {
-	setInputMethod(inputMethod) {
-		this.inputMethod = inputMethod;
-	}
-	readInput(input) {
-		return this.inputMethod.readInput(input);
-	}
+  setInputMethod(inputMethod) {
+    this.inputMethod = inputMethod;
+  }
+
+  readInput(input) {
+    return this.inputMethod.readInput(input);
+  }
 }
 
 class StringInputMethod {
-	readInput(input) {
-		return input
-	}
+  readInput(input) {
+    return input
+  }
 }
 
 class FileInputMethod {
-	readInput(input) {
-		const fileString = fs.readFileSync(input);
-		return fileString
-	}
+  readInput(input) {
+    const fileString = fs.readFileSync(input);
+    return fileString;
+  }
 }
 
 class StreamInputMethod {
-	readInput(input) {
-		let streamString = "";
-		input.on('data', (chunk) => {
-			streamString += chunk;
-		})
+  readInput(input) {
+    let streamString = '';
+    input.on('data', (chunk) => {
+      streamString += chunk;
+    });
 
-		return (new Promise(function(resolve, reject) {
-			input.on('end', () => {
-				resolve(streamString)
-			})
-		}))
+    return (new Promise(function(resolve, reject) {
+      input.on('end', () => {
+        resolve(streamString);
+      });
+    }));
 
-		input.on('end', () => {
-			// console.log(streamString)
-			return streamString
-		})
-	}
+    input.on('end', () => {
+      // console.log(streamString)
+      return streamString;
+    });
+  }
 }
 
 // like 'main'
-const checkDefects = function(rules, inputOptions, outputOptions) {
+const checkDefects = function checkDefects(rules, inputOptions, outputOptions) {
 
-	const inputMap = {
-		'string': new StringInputMethod(),
-		'file': new FileInputMethod(),
-		'stream': new StreamInputMethod(),
-	}
+  const inputMap = {
+    'string': new StringInputMethod(),
+    'file': new FileInputMethod(),
+    'stream': new StreamInputMethod(),
+  }
 
-	const parseInput = function(input) {
-		input = input ? input.toString() : "";
-		input = convertStreamToParsedHTMLTags(input);
-		output = "";
-		const ruleMap = {
-			'tagsWithoutAttributes': new TagsWithoutAttributesRule(),
-			'headerWithoutTags': new HeaderWithoutTagsRule(),
-			'tagQuantityComparison': new TagQuantityComparisonRule(),
-		}
-	
-		const outputMap = {
-			'console': new ConsoleOutputMethod(),
-			'file': new FileOutputMethod(),
-			'stream': new StreamOutputMethod(),
-		}
-	
-		const checker = new RuleChecker();
-		for (let rule of Object.keys(rules)) {
-			checker.setRule(ruleMap[rule]);
-			output += checker.runRule(input, rules[rule]);
-			output += "\n";
-		}
-	
-		const outputHandler = new OutputHandler();
-		outputHandler.setOutputMethod(outputMap[outputOptions['outputMethod']])
-		outputHandler.writeOutput(output, outputOptions['destination'])
-	
-	}
-	const inputHandler = new InputHandler();
-	inputHandler.setInputMethod(inputMap[inputOptions['inputMethod']])
-	input = inputHandler.readInput(inputOptions['source'])
-	if (typeof input.then === 'function') {
-		input.then((input) => {
-			parseInput(input);
-		})
-	} else {
-		parseInput(input);
-	}
+  const parseInput = function(input) {
+    input = input ? input.toString() : '';
+    input = convertStreamToParsedHTMLTags(input);
+    output = '';
+    const ruleMap = {
+      'tagsWithoutAttributes': new TagsWithoutAttributesRule(),
+      'headerWithoutTags': new HeaderWithoutTagsRule(),
+      'tagQuantityComparison': new TagQuantityComparisonRule(),
+    }
 
-}
+    const outputMap = {
+      'console': new ConsoleOutputMethod(),
+      'file': new FileOutputMethod(),
+      'stream': new StreamOutputMethod(),
+    }
+
+    const checker = new RuleChecker();
+    for (let rule of Object.keys(rules)) {
+      checker.setRule(ruleMap[rule]);
+      output += checker.runRule(input, rules[rule]);
+      output += '\n';
+    }
+
+    const outputHandler = new OutputHandler();
+    outputHandler.setOutputMethod(outputMap[outputOptions['outputMethod']])
+    outputHandler.writeOutput(output, outputOptions['destination'])
+
+  };
+  const inputHandler = new InputHandler();
+  inputHandler.setInputMethod(inputMap[inputOptions.inputMethod]);
+  input = inputHandler.readInput(inputOptions.source);
+  if (typeof input.then === 'function') {
+    input.then((input) => {
+      parseInput(input);
+    });
+  } else {
+    parseInput(input);
+  }
+};
 
 module.exports.checkDefects = checkDefects;

@@ -4,5 +4,4 @@ lintlog.txt
 .eslintrc
 .eslintrc.json
 node_modules
-package-lock.json
 writeFile.txt

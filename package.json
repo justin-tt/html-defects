@@ -1,0 +1,11 @@
+{
+  "name": "@jgch/html-defects",
+  "version": "1.0.0",
+  "description": "Check whether html adheres to predefined rules.",
+  "main": "html-defects.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jgch",
+  "license": "ISC"
+}

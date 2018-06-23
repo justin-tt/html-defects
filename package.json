@@ -1,6 +1,6 @@
 {
   "name": "@jgch/html-defects",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Check whether html adheres to predefined rules.",
   "main": "html-defects.js",
   "scripts": {

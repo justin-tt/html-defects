@@ -143,33 +143,59 @@ assert.equal(isAngleBracket("<"), true)
 assert.equal(isAngleBracket(">"), true)
 assert.equal(isAngleBracket("="), false)
 
-const extractHTMLTagsFromHTMLStream = function(stream) {
-	HTMLTags = [];
-	isHTMLTag = false;
-	buffer = "";
+const extractHTMLTagsFromHTMLStream = function(readableStream) {
+	
+	let stream = ""
 
-	const flushBuffer = function() {
-		if (buffer.length !== 0) {
-			HTMLTags.push(buffer);
-		}
+	const extractHTMLTags = function(data) {
+		HTMLTags = [];
+		isHTMLTag = false;
 		buffer = "";
-	}
 
-	for (let char of stream) {
-		if (isAngleBracket(char)) {
-			isHTMLTag = (!isHTMLTag) ? true : false;
-		}
-		if (isHTMLTag) {
-			buffer += char;
-		} else {
-			if (char === ">") {
-				buffer += char;
+		const flushBuffer = function() {
+			if (buffer.length !== 0) {
+				HTMLTags.push(buffer);
 			}
-			flushBuffer();
+			buffer = "";
 		}
+
+		for (let char of stream) {
+			if (isAngleBracket(char)) {
+				isHTMLTag = (!isHTMLTag) ? true : false;
+			}
+			if (isHTMLTag) {
+				buffer += char;
+			} else {
+				if (char === ">") {
+					buffer += char;
+				}
+				flushBuffer();
+			}
+		}
+		return HTMLTags;
 	}
 
-	return HTMLTags;
+	if (typeof readableStream === "string") {
+		stream = readableStream;
+		return extractHTMLTags(stream);
+	} else {
+		// file stream or writable stream
+		readableStream.setEncoding('utf8');
+		readableStream.on('data', (chunk) => {
+			stream  += chunk;
+		})
+
+		readableStream.on('end', () => {
+			return extractHTMLTags(stream);
+		})
+	}
+
+	/*
+	readableStream.on('data', (chunk) => {
+		console.log(`${chunk}`);
+	})
+*/
+
 }
 assert.deepEqual(extractHTMLTagsFromHTMLStream("<html></html>"), ["<html>", "</html>"])
 assert.deepEqual(extractHTMLTagsFromHTMLStream('<html><head><meta charset="utf-8"></head></html>'), ["<html>", "<head>", '<meta charset="utf-8">', "</head>", "</html>"])
@@ -421,7 +447,7 @@ class FileOutputMethod {
 
 }
 
-class WritableStreamMethod {
+class StreamOutputMethod {
 
 	writeOutput(output, outputDestination) {
 		outputDestination.write(output);
@@ -429,36 +455,98 @@ class WritableStreamMethod {
 
 }
 
+class InputHandler {
+	setInputMethod(inputMethod) {
+		this.inputMethod = inputMethod;
+	}
+	readInput(input) {
+		return this.inputMethod.readInput(input);
+	}
+}
+
+class StringInputMethod {
+	readInput(input) {
+		return input
+	}
+}
+
+class FileInputMethod {
+	readInput(input) {
+		const fileString = fs.readFileSync(input);
+		return fileString
+	}
+}
+
+class StreamInputMethod {
+	readInput(input) {
+		let streamString = "";
+		input.on('data', (chunk) => {
+			streamString += chunk;
+		})
+
+		return (new Promise(function(resolve, reject) {
+			input.on('end', () => {
+				resolve(streamString)
+			})
+		}))
+
+		input.on('end', () => {
+			// console.log(streamString)
+			return streamString
+		})
+	}
+}
+
 // like 'main'
-const checkDefects = function(rules, input, outputOptions) {
+const checkDefects = function(rules, inputOptions, outputOptions) {
 
-	input = input.toString();
+	const inputMap = {
+		'string': new StringInputMethod(),
+		'file': new FileInputMethod(),
+		'stream': new StreamInputMethod(),
+	}
 
-	input = convertStreamToParsedHTMLTags(input);
+	const parseInput = function(input) {
+		input = input ? input.toString() : "";
+		input = convertStreamToParsedHTMLTags(input);
+		output = "";
+		const ruleMap = {
+			'tagsWithoutAttributes': new TagsWithoutAttributesRule(),
+			'headerWithoutTags': new HeaderWithoutTagsRule(),
+			'tagQuantityComparison': new TagQuantityComparisonRule(),
+		}
 	
-	output = "";
-	const ruleMap = {
-		'tagsWithoutAttributes': new TagsWithoutAttributesRule(),
-		'headerWithoutTags': new HeaderWithoutTagsRule(),
-		'tagQuantityComparison': new TagQuantityComparisonRule(),
+		const outputMap = {
+			'console': new ConsoleOutputMethod(),
+			'file': new FileOutputMethod(),
+			'stream': new StreamOutputMethod(),
+		}
+	
+		const checker = new RuleChecker();
+		for (let rule of Object.keys(rules)) {
+			checker.setRule(ruleMap[rule]);
+			output += checker.runRule(input, rules[rule]);
+			output += "\n";
+		}
+	
+		const outputHandler = new OutputHandler();
+		outputHandler.setOutputMethod(outputMap[outputOptions['outputMethod']])
+		outputHandler.writeOutput(output, outputOptions['stream'])
+	
+	}
+	const inputHandler = new InputHandler();
+	inputHandler.setInputMethod(inputMap[inputOptions['inputMethod']])
+	input = inputHandler.readInput(inputOptions['source'])
+	// console.log(input) // shows string/buffer/promise
+	if (typeof input.then === 'function') {
+		input.then((input) => {
+			// parse it here.
+			parseInput(input);
+		})
+	} else {
+		parseInput(input);
 	}
 
-	const outputMap = {
-		'console': new ConsoleOutputMethod(),
-		'file': new FileOutputMethod(),
-		'stream': new WritableStreamMethod(),
-	}
-
-	const checker = new RuleChecker();
-	for (let rule of Object.keys(rules)) {
-		checker.setRule(ruleMap[rule]);
-		output += checker.runRule(input, rules[rule]);
-		output += "\n";
-	}
-
-	const outputHandler = new OutputHandler();
-	outputHandler.setOutputMethod(outputMap[outputOptions['outputMethod']])
-	outputHandler.writeOutput(output, outputOptions['stream'])
 }
 
 module.exports.checkDefects = checkDefects;

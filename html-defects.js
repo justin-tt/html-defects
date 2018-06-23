@@ -271,7 +271,7 @@ class TagsWithoutAttributesRule {
   checkRule(input, options) {
     let output = '';
 
-    output += `Checking 'tags without attributes' rule:\n`;
+    output += 'Checking \'tags without attributes\' rule:\n';
 
     for (const option of options) {
       for (const elementName of Object.keys(option)) {
@@ -296,7 +296,7 @@ class HeaderWithoutTagsRule {
     let output = '';
     const surroundingTag = 'head';
 
-    output += `Checking "header without tags" rule:\n`;
+    output += 'Checking \'header without tags\' rule:\n';
 
     const filterElementsWithinTag = function filterElementsWithinTag(input, tagName) {
       // filter out elements inside head tag
@@ -308,17 +308,16 @@ class HeaderWithoutTagsRule {
     };
     input = filterElementsWithinTag(input, surroundingTag);
 
-    for (let option of options) {
-      for (let elementName of Object.keys(option)) {
+    for (const option of options) {
+      for (const elementName of Object.keys(option)) {
         const attributeRequired = Object.keys(option[elementName])[0];
         const attributeValueRequired = option[elementName][attributeRequired];
         const attributeRequiredCount = input.filter(tag => (tag.elementName === elementName))
           .filter((tag) => {
             if (tag.attributes[attributeRequired] !== undefined) {
               return tag.attributes[attributeRequired] === attributeValueRequired;
-            } else {
-              return false;
             }
+            return false;
           })
           .length;
 
@@ -353,11 +352,10 @@ assert.equal(compareQuantity(5, 2, '!='), true);
 
 class TagQuantityComparisonRule {
   checkRule(input, options) {
-
     let output = '';
     const surroundingTag = 'html';
 
-    output += `Checking "tag quantity comparison" rule:\n`;
+    output += 'Checking \'tag quantity comparison\' rule:\n';
 
     const filterElementsWithinTag = function filterElementsWithinTag(input, tagName) {
       // filter out elements inside head tag
@@ -369,7 +367,7 @@ class TagQuantityComparisonRule {
     };
     input = filterElementsWithinTag(input, surroundingTag);
 
-    for (let option of options) {
+    for (const option of options) {
       const tagCount = input.filter(tag => (tag.elementName === option.elementName && !tag.closingTag))
         .length;
 
@@ -428,7 +426,7 @@ class InputHandler {
 
 class StringInputMethod {
   readInput(input) {
-    return input
+    return input;
   }
 }
 
@@ -446,29 +444,23 @@ class StreamInputMethod {
       streamString += chunk;
     });
 
-    return (new Promise(function(resolve, reject) {
+    return (new Promise((resolve, reject) => {
       input.on('end', () => {
         resolve(streamString);
       });
     }));
-
-    input.on('end', () => {
-      // console.log(streamString)
-      return streamString;
-    });
   }
 }
 
 // like 'main'
 const checkDefects = function checkDefects(rules, inputOptions, outputOptions) {
-
   const inputMap = {
     string: new StringInputMethod(),
     file: new FileInputMethod(),
     stream: new StreamInputMethod(),
   };
 
-  const parseInput = function(input) {
+  const parseInput = function (input) {
     input = input ? input.toString() : '';
     input = convertStreamToParsedHTMLTags(input);
     output = '';

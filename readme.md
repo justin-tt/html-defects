@@ -140,7 +140,12 @@ outputOptions = {
 const writableStream = fs.createWriteStream('defectsStream.txt')
 outputOptions = {
 	'outputMethod': 'stream',
-	'stream': writableStream
+	'destination': writableStream
 }
+```
+
+# Test
+```javascript
+npm run test
 ```
 

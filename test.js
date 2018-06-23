@@ -43,7 +43,7 @@ const outputOptions3 = {
 hd.checkDefects(rules, inputOptions3, outputOptions3);
 
 
-const rules4 = {
+const challengeRules = {
   headerWithoutTags: [
     { 
       "title": {},
@@ -60,12 +60,7 @@ const rules4 = {
     },
     {
       "meta": {
-        "charset": '"utf-8"',
-      },
-    },
-    {
-      "span": {
-        "class": '"c1 c2"',
+        "name": '"robots"',
       },
     },
   ],
@@ -76,34 +71,26 @@ const rules4 = {
     {
       "a": "rel",
     },
-    {
-      "span": "data-node",
-    },
   ],
   tagQuantityComparison: [
     {
-      "comparisonOperator": "<=",
+      "comparisonOperator": ">",
       "elementName": "strong",
       "quantity": 15,
     },
     {
       "comparisonOperator": ">",
-      "elementName": "img",
-      "quantity": 1,
-    },
-    {
-      "comparisonOperator": ">",
-      "elementName": "span",
+      "elementName": "h1",
       "quantity": 1,
     },
   ],
 };
-const inputOptions4 = {
+const challengeInputOptions = {
   'inputMethod': 'string',
   'source': '<html><head><meta name="descriptions"><meta charset="utf-8"></head><span data-node class="c1 c2"><img src="hello.jpg" /><img src="hello.jpg" alt="hello"/></span><span>Hello i\'m a "test"</span></html>',
 };
-const outputOptions4 = {
+const challengeOutputOptions = {
   'outputMethod': 'console',
 };
 
-hd.checkDefects(rules4, inputOptions4, outputOptions4);
+hd.checkDefects(challengeRules, challengeInputOptions, challengeOutputOptions);

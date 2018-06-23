@@ -1,0 +1,4 @@
+Checking "tags without attributes" rule:
+<img> tags without alt attribute: 1
+<a> tags without rel attribute: 2
+

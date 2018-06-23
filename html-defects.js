@@ -531,7 +531,7 @@ const checkDefects = function(rules, inputOptions, outputOptions) {
 	
 		const outputHandler = new OutputHandler();
 		outputHandler.setOutputMethod(outputMap[outputOptions['outputMethod']])
-		outputHandler.writeOutput(output, outputOptions['stream'])
+		outputHandler.writeOutput(output, outputOptions['destination'])
 	
 	}
 	const inputHandler = new InputHandler();

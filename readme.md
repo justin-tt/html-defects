@@ -9,7 +9,6 @@ npm install --save @jgch/html-defects
 ```javascript
 const hd = require('@jgch/html-defects');
 
-// See Rules section below
 const rules = {
 	tagsWithoutAttributes: [
 		{
@@ -21,8 +20,12 @@ const rules = {
 	],
 };
 
-// Can be a string, file, or node readable stream.
-const input = '<html><img src="foo.jpg" /></html>';
+const inputOptions = {
+	'inputMethod': 'string',
+	'source': '<html><img src="foo.jpg" /></html>',
+	
+}
+
 const outputOptions = {
 	'outputMethod': 'console'
 }
@@ -92,15 +95,24 @@ tagQuantityComparison: [
 	}
 ]
 ```
-# Input
+# Input options
 Specify the input source.
 ## HTML File
 ```javascript
-const input = fs.readFileSync('test.html')
+// To read from a file.
+inputOptions = {
+	'inputMethod': 'file',
+	'source': 'foo.html'
+}
 ```
 ## Readable Stream
 ```javascript
-const input = fs.createReadStream('test.html')
+// To read from a stream
+const readableStream = fs.createReadStream('test.html');
+inputOptions = {
+	'inputMethod': 'stream',
+	'source': readableStream
+}
 ```
 
 
@@ -118,16 +130,16 @@ outputOptions = {
 // To write to a file, specify the filename in the 'stream' key.
 outputOptions = {
 	'outputMethod': 'file',
-	'stream': 'defects.txt'
+	'destination': 'defectsFile.txt'
 }
 ```
 
 ## Writable Stream
 ```javascript
 // To write to a node writable stream, specify the stream in the 'stream' key.
-const writableStream = fs.createWriteStream('defects.txt')
+const writableStream = fs.createWriteStream('defectsStream.txt')
 outputOptions = {
-	'outputMethod': 'file',
+	'outputMethod': 'stream',
 	'stream': writableStream
 }
 ```

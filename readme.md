@@ -146,9 +146,5 @@ outputOptions = {
 ```
 
 # Test
-```javascript
-npm run test
-```
-
-Check out test.js for more examples.
+Check out test.js (within /node_modules/@jgch/html-defects) for more examples.
 

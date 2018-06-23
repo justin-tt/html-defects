@@ -292,9 +292,7 @@ class TagsWithoutAttributesRule {
 
 
 class HeaderWithoutTagsRule {
-
   checkRule(input, options) {
-
     let output = '';
     const surroundingTag = 'head';
 
@@ -375,8 +373,8 @@ class TagQuantityComparisonRule {
       const tagCount = input.filter(tag => (tag.elementName === option.elementName && !tag.closingTag))
         .length;
 
-      if (compareQuantity(tagCount, option['quantity'], option['comparisonOperator'])) {
-        output += `In <${surroundingTag}>: Quantity of <${option.elementName}> tags is ${option['comparisonOperator']} ${option['quantity']}\n`;
+      if (compareQuantity(tagCount, option.quantity, option.comparisonOperator)) {
+        output += `In <${surroundingTag}>: Quantity of <${option.elementName}> tags is ${option.comparisonOperator} ${option.quantity}\n`;
       }
       // assert option contains keys comparisonOperator,
       // elementName, quantity
@@ -387,9 +385,7 @@ class TagQuantityComparisonRule {
   }
 }
 
-
 class OutputHandler {
-
   setOutputMethod(outputMethod) {
     this.outputMethod = outputMethod;
   }
@@ -400,14 +396,12 @@ class OutputHandler {
 }
 
 class ConsoleOutputMethod {
-
   writeOutput(output, outputDestination) {
     console.log(output);
   }
 }
 
 class FileOutputMethod {
-
   writeOutput(output, outputDestination) {
     fs.writeFile(outputDestination, output, (err) => {
       if (err) throw err;
@@ -469,38 +463,37 @@ class StreamInputMethod {
 const checkDefects = function checkDefects(rules, inputOptions, outputOptions) {
 
   const inputMap = {
-    'string': new StringInputMethod(),
-    'file': new FileInputMethod(),
-    'stream': new StreamInputMethod(),
-  }
+    string: new StringInputMethod(),
+    file: new FileInputMethod(),
+    stream: new StreamInputMethod(),
+  };
 
   const parseInput = function(input) {
     input = input ? input.toString() : '';
     input = convertStreamToParsedHTMLTags(input);
     output = '';
     const ruleMap = {
-      'tagsWithoutAttributes': new TagsWithoutAttributesRule(),
-      'headerWithoutTags': new HeaderWithoutTagsRule(),
-      'tagQuantityComparison': new TagQuantityComparisonRule(),
-    }
+      tagsWithoutAttributes: new TagsWithoutAttributesRule(),
+      headerWithoutTags: new HeaderWithoutTagsRule(),
+      tagQuantityComparison: new TagQuantityComparisonRule(),
+    };
 
     const outputMap = {
-      'console': new ConsoleOutputMethod(),
-      'file': new FileOutputMethod(),
-      'stream': new StreamOutputMethod(),
-    }
+      console: new ConsoleOutputMethod(),
+      file: new FileOutputMethod(),
+      stream: new StreamOutputMethod(),
+    };
 
     const checker = new RuleChecker();
-    for (let rule of Object.keys(rules)) {
+    for (const rule of Object.keys(rules)) {
       checker.setRule(ruleMap[rule]);
       output += checker.runRule(input, rules[rule]);
       output += '\n';
     }
 
     const outputHandler = new OutputHandler();
-    outputHandler.setOutputMethod(outputMap[outputOptions['outputMethod']])
-    outputHandler.writeOutput(output, outputOptions['destination'])
-
+    outputHandler.setOutputMethod(outputMap[outputOptions.outputMethod]);
+    outputHandler.writeOutput(output, outputOptions.destination);
   };
   const inputHandler = new InputHandler();
   inputHandler.setInputMethod(inputMap[inputOptions.inputMethod]);

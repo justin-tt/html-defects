@@ -30,7 +30,7 @@ const outputOptions = {
 	outputMethod: 'console'
 }
 
-hd.checkDefects(rules, input, outputOptions);
+hd.checkDefects(rules, inputOptions, outputOptions);
 ```
 
 # Rules

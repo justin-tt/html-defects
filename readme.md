@@ -127,7 +127,7 @@ outputOptions = {
 ```
 ## File
 ```javascript
-// To write to a file, specify the filename in the 'stream' key.
+// To write to a file, specify the filename in the 'destination' key.
 outputOptions = {
 	'outputMethod': 'file',
 	'destination': 'defectsFile.txt'
@@ -136,7 +136,7 @@ outputOptions = {
 
 ## Writable Stream
 ```javascript
-// To write to a node writable stream, specify the stream in the 'stream' key.
+// To write to a node writable stream, specify the stream in the 'destination' key.
 const writableStream = fs.createWriteStream('defectsStream.txt')
 outputOptions = {
 	'outputMethod': 'stream',

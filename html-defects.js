@@ -61,7 +61,7 @@ assert.equal(isAprostrophe("'"), true)
 assert.equal(isAprostrophe(" "), false)
 
 
-// terminology:
+// Terminology:
 // HTMLCode, HTMLTag, TagName, TagAttribute, TagAttributeValue
 // HTMLTag is the <p> itself, HTMLElement is the stuff between the tags
  
@@ -190,12 +190,6 @@ const extractHTMLTagsFromHTMLStream = function(readableStream) {
 		})
 	}
 
-	/*
-	readableStream.on('data', (chunk) => {
-		console.log(`${chunk}`);
-	})
-*/
-
 }
 assert.deepEqual(extractHTMLTagsFromHTMLStream("<html></html>"), ["<html>", "</html>"])
 assert.deepEqual(extractHTMLTagsFromHTMLStream('<html><head><meta charset="utf-8"></head></html>'), ["<html>", "<head>", '<meta charset="utf-8">', "</head>", "</html>"])
@@ -255,7 +249,6 @@ assert.deepEqual(parseTokenizedHTMLTag(
 		"class": 'dataset',
 		"data-modal-target": null,
 	},
-	// "attributesWithoutValues": ["data-modal-target"]
 })
 
 const convertStreamToParsedHTMLTags = function(stream) {
@@ -275,7 +268,7 @@ assert.deepEqual(convertStreamToParsedHTMLTags('<html></html>'), [{
 	'attributes': {},
 }])
 
-// Use the strategy pattern for rules and output
+// Use the strategy pattern for input, output, rules
 class RuleChecker {
 
 	setRule(rule) {
@@ -351,7 +344,6 @@ class HeaderWithoutTagsRule {
 					.length
 
 				if (attributeRequiredCount === 0) {
-					// don't display empty attributes
 					output += `Header tag does not have <${elementName}${attributeRequired ? ` ${attributeRequired}=${attributeValueRequired}` : ''}>\n`
 				}
 			}
@@ -537,10 +529,8 @@ const checkDefects = function(rules, inputOptions, outputOptions) {
 	const inputHandler = new InputHandler();
 	inputHandler.setInputMethod(inputMap[inputOptions['inputMethod']])
 	input = inputHandler.readInput(inputOptions['source'])
-	// console.log(input) // shows string/buffer/promise
 	if (typeof input.then === 'function') {
 		input.then((input) => {
-			// parse it here.
 			parseInput(input);
 		})
 	} else {

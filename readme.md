@@ -10,7 +10,7 @@ npm install --save @jgch/html-defects
 const hd = require('@jgch/html-defects');
 
 const rules = {
-	tagsWithoutAttributes: [
+    tagsWithoutAttributes: [
 		{
 			"img": "alt",
 		},
@@ -45,7 +45,7 @@ Each rule key contains an array of options.
 This counts the number of tags that do not have a specified attribute.
 
 ```javascript
-// Look for <a> tags that do not contain *rel* attribute
+// Look for <a> tags that do not contain *rel* attribute.
 tagsWithoutAttributes: [
 	{
 		"a": "rel"
@@ -57,8 +57,9 @@ tagsWithoutAttributes: [
 This shows if specified tags are missing in the HTML header.
 
 ```javascript
-// Check for missing <title> tags and 
+// Check for missing <title> tags,
 // missing <meta name="descriptions"> tags
+// and missing <meta name="keywords"> tags.
 headerWithoutTags: [
 	{
 		"title": {}
@@ -107,7 +108,7 @@ inputOptions = {
 ```
 ## Readable Stream
 ```javascript
-// To read from a stream
+// To read from a stream.
 const readableStream = fs.createReadStream('test.html');
 inputOptions = {
 	'inputMethod': 'stream',
@@ -148,4 +149,6 @@ outputOptions = {
 ```javascript
 npm run test
 ```
+
+Check out test.js for more examples.
 

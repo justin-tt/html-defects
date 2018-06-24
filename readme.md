@@ -286,11 +286,11 @@ For example, in our 'tagsWithoutAttributes' rule, we specified the following opt
         a: 'rel',
     }
 ]
+```
 
 This gives rise to two variations of an abstract rule, where we could be looking for a particular tag, that does not contain a particular attribute. This is easy to implement by looping over each of the parsed input HTML objects, searching its elementName for the option's key, followed by searching its attributes for the option's key's value.
 
 You can define the option object to take any form, as long as you implement the logic required to use this option object. See the section on 'Example of custom rule creation' for more info.
-```
 
 ### The return value
 Within the checkRule method, you should have a return statement that returns a string which contains information about the status of your rule when applied to the relevant html parsed html tags.
@@ -298,7 +298,7 @@ Within the checkRule method, you should have a return statement that returns a s
 # Example of custom rule creation
 
 ## Rule definition
-Let's say we wish to create a rule that checks if a given element name has an equal number of closing tags.
+Let's say we wish to create a rule that checks if a given element name has an equal number of opening and closing tags.
 
 ## Options
 We can turn this abstraction into a concrete option by allowing the user to specify the name of the tag.
@@ -337,9 +337,10 @@ Our rule will check through each of these option variants.
 ## Implementing the rule class
 Let's create our rule class to implement the logic behind this rule.
 
-We need to implement the checkRule method, which gives us access to the input and options (see sections above). We also need to return an output string that lets us know the outcome of the rule after checking.
+We need to implement the checkRule method, which gives us access to the input HTML and options (see sections above). We also need to return an output string that lets us know the outcome of the rule after checking.
 
-Loop over each of the variations in the array, and count the number of each element and its opening/closing tags using the Array.prototype.filter method.
+Implementation details:
+Loop over each of the option variations in the array. For each option's specified element, count the number of opening/closing tags for each element by filtering the input elements and getting the filtered input's length.
 
 Add output text to show if the tag counts match or mismatch.
 

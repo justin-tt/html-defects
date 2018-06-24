@@ -12,6 +12,8 @@ const rules = [
     options: [
       {
         img: 'alt',
+      },
+      {
         a: 'rel',
       },
     ],

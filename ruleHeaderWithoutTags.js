@@ -22,6 +22,9 @@ module.exports = class HeaderWithoutTagsRule {
         const attributeValueRequired = option[elementName][attributeRequired];
         const attributeRequiredCount = input.filter(tag => (tag.elementName === elementName))
           .filter((tag) => {
+            if (!attributeValueRequired) {
+              return true;
+            }
             if (tag.attributes[attributeRequired] !== undefined) {
               return tag.attributes[attributeRequired] === attributeValueRequired;
             }

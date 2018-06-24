@@ -1,122 +1,11 @@
 const fs = require('fs');
 const hd = require('./html-defects.js');
 const assert = require('assert');
-
-
-class TagsWithoutAttributesRule {
-  checkRule(input, options) {
-    let output = '';
-
-    output += 'Checking \'tags without attributes\' rule:\n';
-
-    for (const option of options) {
-      for (const elementName of Object.keys(option)) {
-        const attributeName = option[elementName];
-        const defectCount = input.filter(tag => (tag.elementName === elementName))
-          .filter(tag => !(Object.keys(tag).includes('closingTag')))
-          .filter(tag => !(Object.keys(tag.attributes).includes(attributeName)))
-          .length;
-
-        if (defectCount !== 0) {
-          output += `<${elementName}> tags without ${attributeName} attribute: ${defectCount}\n`;
-        }
-      }
-    }
-    return output;
-  }
-}
-class HeaderWithoutTagsRule {
-
-  checkRule(input, options) {
-    let output = '';
-    const surroundingTag = 'head';
-
-    output += 'Checking \'header without tags\' rule:\n';
-
-    const filterElementsWithinTag = function filterElementsWithinTag(input, tagName) {
-      // filter out elements inside head tag
-      // assuming that there is only one head tag
-      const headTagStartIndex = input.findIndex(tag => (tag.elementName === tagName));
-      const headTagEndIndex = input.findIndex(tag => (tag.elementName === tagName && tag.closingTag === true));
-      input = input.slice(headTagStartIndex + 1, headTagEndIndex);
-      return input;
-    };
-    input = filterElementsWithinTag(input, surroundingTag);
-
-    for (const option of options) {
-      for (const elementName of Object.keys(option)) {
-        const attributeRequired = Object.keys(option[elementName])[0];
-        const attributeValueRequired = option[elementName][attributeRequired];
-        const attributeRequiredCount = input.filter(tag => (tag.elementName === elementName))
-          .filter((tag) => {
-            if (tag.attributes[attributeRequired] !== undefined) {
-              return tag.attributes[attributeRequired] === attributeValueRequired;
-            }
-            return false;
-          })
-          .length;
-
-        if (attributeRequiredCount === 0) {
-          output += `Header tag does not have <${elementName}${attributeRequired ? ` ${attributeRequired}=${attributeValueRequired}` : ''}>\n`;
-        }
-      }
-    }
-    return output;
-  }
-}
-
-const compareQuantityMap = {
-  '<': (x, y) => x < y,
-  '>': (x, y) => x > y,
-  '==': (x, y) => x === y,
-  '>=': (x, y) => x >= y,
-  '<=': (x, y) => x <= y,
-  '!=': (x, y) => x !== y,
-};
-
-const compareQuantity = function compareQuantity(x, y, comparisonOperator) {
-  return compareQuantityMap[comparisonOperator](x, y);
-};
-assert.equal(compareQuantity(1, 2, '<'), true);
-assert.equal(compareQuantity(5, 2, '>'), true);
-assert.equal(compareQuantity(2, 2, '>='), true);
-assert.equal(compareQuantity(2, 2, '<='), true);
-assert.equal(compareQuantity(2, 2, '=='), true);
-assert.equal(compareQuantity(5, 2, '!='), true);
-
-
-class TagQuantityComparisonRule {
-  checkRule(input, options) {
-    let output = '';
-    const surroundingTag = 'html';
-
-    output += 'Checking \'tag quantity comparison\' rule:\n';
-
-    const filterElementsWithinTag = function filterElementsWithinTag(input, tagName) {
-      // filter out elements inside head tag
-      // assuming that there is only one head tag
-      const headTagStartIndex = input.findIndex(tag => tag.elementName === tagName);
-      const headTagEndIndex = input.findIndex(tag => (tag.elementName === tagName) && tag.closingTag === true);
-      input = input.slice(headTagStartIndex + 1, headTagEndIndex);
-      return input;
-    };
-    input = filterElementsWithinTag(input, surroundingTag);
-
-    for (const option of options) {
-      const tagCount = input.filter(tag => (tag.elementName === option.elementName && !tag.closingTag))
-        .length;
-
-      if (compareQuantity(tagCount, option.quantity, option.comparisonOperator)) {
-        output += `In <${surroundingTag}>: Quantity of <${option.elementName}> tags is ${option.comparisonOperator} ${option.quantity}\n`;
-      }
-      // assert option contains keys comparisonOperator,
-      // elementName, quantity
-      // throw errors
-    }
-
-    return output;
-  }
-}
+const equalRule = require('./ruleEqualNumberOfClosingOpeningTags.js');
+const TagsWithoutAttributesRule = require('./ruleTagsWithoutAttributes.js');
+const HeaderWithoutTagsRule = require('./ruleHeaderWithoutTags.js');
+const TagQuantityComparisonRule = require('./ruleTagQuantityComparison.js');
+const challengeRules = require('./rules.js');
 
 const rules = {
   tagsWithoutAttributes: [
@@ -211,7 +100,7 @@ let challengeRules = {
 
 // the key is irrelevant, maybe just pass an array instead
 // of an object
-let challengeRules = {
+let asdf = {
   headerWithoutTags: {
     rule: new HeaderWithoutTagsRule(),
     options: [
@@ -238,62 +127,8 @@ let challengeRules = {
 }
 
 
-class EqualNumberOfOpeningClosingTagsRule {
-    checkRule(input, options) {
-        let output = '';
-        output += `Checking that elements have equal numbers of opening and closing tags\n`;
-
-        // iterate over each option object within options
-        // array for each variation of the rule
-        for (const option of options) {
-            const elementName = option.name;
-            const openingTagCount = input.filter(tag => (
-                tag.elementName === elementName && !tag.closingTag
-            )).length;
-            const closingTagCount = input.filter(tag => (
-                tag.elementName === elementName && tag.closingTag
-            )).length;
-
-            if (openingTagCount !== closingTagCount) {
-                output += `Unequal counts of opening and closing tags for <${elementName}>\n`;
-                output += `Opening: ${openingTagCount}\n`;
-                output += `Closing: ${closingTagCount}\n`;
-            }
-        }
-
-        return output;
-    }
-}
 
 
-challengeRules = [
-  {
-    rule: new EqualNumberOfOpeningClosingTagsRule(),
-    options: [
-        {
-            name: 'html'
-        },
-        {
-            name: 'div'
-        }
-    ]
-  },
-  {
-    rule: new HeaderWithoutTagsRule(),
-    options: [
-      {
-        meta: {
-          name: '"keywords"'
-        }
-      },
-      {
-        meta: {
-          name: '"descriptions"'
-        }
-      }
-    ]
-  }
-]
 
 
 const challengeInputOptions = {

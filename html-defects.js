@@ -267,122 +267,6 @@ class RuleChecker {
   }
 }
 
-class TagsWithoutAttributesRule {
-  checkRule(input, options) {
-    let output = '';
-
-    output += 'Checking \'tags without attributes\' rule:\n';
-
-    for (const option of options) {
-      for (const elementName of Object.keys(option)) {
-        const attributeName = option[elementName];
-        const defectCount = input.filter(tag => (tag.elementName === elementName))
-          .filter(tag => !(Object.keys(tag).includes('closingTag')))
-          .filter(tag => !(Object.keys(tag.attributes).includes(attributeName)))
-          .length;
-
-        if (defectCount !== 0) {
-          output += `<${elementName}> tags without ${attributeName} attribute: ${defectCount}\n`;
-        }
-      }
-    }
-    return output;
-  }
-}
-
-
-class HeaderWithoutTagsRule {
-  checkRule(input, options) {
-    let output = '';
-    const surroundingTag = 'head';
-
-    output += 'Checking \'header without tags\' rule:\n';
-
-    const filterElementsWithinTag = function filterElementsWithinTag(input, tagName) {
-      // filter out elements inside head tag
-      // assuming that there is only one head tag
-      const headTagStartIndex = input.findIndex(tag => (tag.elementName === tagName));
-      const headTagEndIndex = input.findIndex(tag => (tag.elementName === tagName && tag.closingTag === true));
-      input = input.slice(headTagStartIndex + 1, headTagEndIndex);
-      return input;
-    };
-    input = filterElementsWithinTag(input, surroundingTag);
-
-    for (const option of options) {
-      for (const elementName of Object.keys(option)) {
-        const attributeRequired = Object.keys(option[elementName])[0];
-        const attributeValueRequired = option[elementName][attributeRequired];
-        const attributeRequiredCount = input.filter(tag => (tag.elementName === elementName))
-          .filter((tag) => {
-            if (tag.attributes[attributeRequired] !== undefined) {
-              return tag.attributes[attributeRequired] === attributeValueRequired;
-            }
-            return false;
-          })
-          .length;
-
-        if (attributeRequiredCount === 0) {
-          output += `Header tag does not have <${elementName}${attributeRequired ? ` ${attributeRequired}=${attributeValueRequired}` : ''}>\n`;
-        }
-      }
-    }
-    return output;
-  }
-}
-
-const compareQuantityMap = {
-  '<': (x, y) => x < y,
-  '>': (x, y) => x > y,
-  '==': (x, y) => x === y,
-  '>=': (x, y) => x >= y,
-  '<=': (x, y) => x <= y,
-  '!=': (x, y) => x !== y,
-};
-
-const compareQuantity = function compareQuantity(x, y, comparisonOperator) {
-  return compareQuantityMap[comparisonOperator](x, y);
-};
-assert.equal(compareQuantity(1, 2, '<'), true);
-assert.equal(compareQuantity(5, 2, '>'), true);
-assert.equal(compareQuantity(2, 2, '>='), true);
-assert.equal(compareQuantity(2, 2, '<='), true);
-assert.equal(compareQuantity(2, 2, '=='), true);
-assert.equal(compareQuantity(5, 2, '!='), true);
-
-
-class TagQuantityComparisonRule {
-  checkRule(input, options) {
-    let output = '';
-    const surroundingTag = 'html';
-
-    output += 'Checking \'tag quantity comparison\' rule:\n';
-
-    const filterElementsWithinTag = function filterElementsWithinTag(input, tagName) {
-      // filter out elements inside head tag
-      // assuming that there is only one head tag
-      const headTagStartIndex = input.findIndex(tag => tag.elementName === tagName);
-      const headTagEndIndex = input.findIndex(tag => (tag.elementName === tagName) && tag.closingTag === true);
-      input = input.slice(headTagStartIndex + 1, headTagEndIndex);
-      return input;
-    };
-    input = filterElementsWithinTag(input, surroundingTag);
-
-    for (const option of options) {
-      const tagCount = input.filter(tag => (tag.elementName === option.elementName && !tag.closingTag))
-        .length;
-
-      if (compareQuantity(tagCount, option.quantity, option.comparisonOperator)) {
-        output += `In <${surroundingTag}>: Quantity of <${option.elementName}> tags is ${option.comparisonOperator} ${option.quantity}\n`;
-      }
-      // assert option contains keys comparisonOperator,
-      // elementName, quantity
-      // throw errors
-    }
-
-    return output;
-  }
-}
-
 class OutputHandler {
   setOutputMethod(outputMethod) {
     this.outputMethod = outputMethod;
@@ -473,9 +357,10 @@ const checkDefects = function checkDefects(rules, inputOptions, outputOptions) {
     };
 
     const checker = new RuleChecker();
-    for (const rule of Object.keys(rules)) {
-      checker.setRule(rules[rule].rule);
-      output += checker.runRule(input, rules[rule].options);
+    for (const rule of rules) {
+    // for (const rule of Object.keys(rules)) {
+      checker.setRule(rule.rule);
+      output += checker.runRule(input, rule.options);
       output += '\n';
     }
 

@@ -26,6 +26,7 @@ class TagsWithoutAttributesRule {
   }
 }
 class HeaderWithoutTagsRule {
+
   checkRule(input, options) {
     let output = '';
     const surroundingTag = 'head';
@@ -158,7 +159,7 @@ const outputOptions3 = {
 };
 // hd.checkDefects(rules, inputOptions3, outputOptions3);
 
-
+/* 
 let challengeRules = {
   ruleMap: {
     tagsWithoutAttributes: new TagsWithoutAttributesRule(),
@@ -206,35 +207,98 @@ let challengeRules = {
     },
   ],
 };
-challengeRules = {
+*/
+
+// the key is irrelevant, maybe just pass an array instead
+// of an object
+let challengeRules = {
   headerWithoutTags: {
     rule: new HeaderWithoutTagsRule(),
-    options:
-  [
-    {
-      title: {},
-    },
-    {
-      meta: {
-        name: '"descriptions"',
+    options: [
+      {
+        title: {},
       },
-    },
-    {
-      meta: {
-        name: '"keywords"',
+      {
+        meta: {
+          name: '"descriptions"',
+        },
       },
-    },
-    {
-      meta: {
-        name: '"robots"',
+      {
+        meta: {
+          name: '"keywords"',
+        },
       },
-    },
-  ],
+      {
+        meta: {
+          name: '"robots"',
+        },
+      },
+    ],
+  }
 }
+
+
+class EqualNumberOfOpeningClosingTagsRule {
+    checkRule(input, options) {
+        let output = '';
+        output += `Checking that elements have equal numbers of opening and closing tags\n`;
+
+        // iterate over each option object within options
+        // array for each variation of the rule
+        for (const option of options) {
+            const elementName = option.name;
+            const openingTagCount = input.filter(tag => (
+                tag.elementName === elementName && !tag.closingTag
+            )).length;
+            const closingTagCount = input.filter(tag => (
+                tag.elementName === elementName && tag.closingTag
+            )).length;
+
+            if (openingTagCount !== closingTagCount) {
+                output += `Unequal counts of opening and closing tags for <${elementName}>\n`;
+                output += `Opening: ${openingTagCount}\n`;
+                output += `Closing: ${closingTagCount}\n`;
+            }
+        }
+
+        return output;
+    }
 }
+
+
+challengeRules = [
+  {
+    rule: new EqualNumberOfOpeningClosingTagsRule(),
+    options: [
+        {
+            name: 'html'
+        },
+        {
+            name: 'div'
+        }
+    ]
+  },
+  {
+    rule: new HeaderWithoutTagsRule(),
+    options: [
+      {
+        meta: {
+          name: '"keywords"'
+        }
+      },
+      {
+        meta: {
+          name: '"descriptions"'
+        }
+      }
+    ]
+  }
+]
+
+
 const challengeInputOptions = {
   inputMethod: 'string',
-  source: '<html><head><meta name="descriptions"><meta charset="utf-8"></head><span data-node class="c1 c2"><img src="hello.jpg" /><img src="hello.jpg" alt="hello"/></span><span>Hello i\'m a "test"</span></html>',
+  source: '<html><head><meta name="descriptions"><meta charset="utf-8"></head><span data-node class="c1 c2"><img src="hello.jpg" /><img src="hello.jpg" alt="hello"/></span><span>Hello i\'m a "test"</span><div></html>',
 };
 const challengeOutputOptions = {
   outputMethod: 'console',

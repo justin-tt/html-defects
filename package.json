@@ -1,7 +1,7 @@
 {
   "name": "@jgch/html-defects",
   "version": "1.0.8",
-  "description": "Check whether html adheres to predefined rules.",
+  "description": "A parser to check whether html adheres to predefined/custom rules.",
   "homepage": "https://github.com/justin-tt/html-defects",
   "main": "html-defects.js",
   "scripts": {

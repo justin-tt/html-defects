@@ -460,15 +460,11 @@ const checkDefects = function checkDefects(rules, inputOptions, outputOptions) {
     stream: new StreamInputMethod(),
   };
 
+
   const parseInput = function (input) {
     input = input ? input.toString() : '';
     input = convertStreamToParsedHTMLTags(input);
     output = '';
-    const ruleMap = {
-      tagsWithoutAttributes: new TagsWithoutAttributesRule(),
-      headerWithoutTags: new HeaderWithoutTagsRule(),
-      tagQuantityComparison: new TagQuantityComparisonRule(),
-    };
 
     const outputMap = {
       console: new ConsoleOutputMethod(),
@@ -478,8 +474,8 @@ const checkDefects = function checkDefects(rules, inputOptions, outputOptions) {
 
     const checker = new RuleChecker();
     for (const rule of Object.keys(rules)) {
-      checker.setRule(ruleMap[rule]);
-      output += checker.runRule(input, rules[rule]);
+      checker.setRule(rules[rule].rule);
+      output += checker.runRule(input, rules[rule].options);
       output += '\n';
     }
 

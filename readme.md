@@ -147,6 +147,61 @@ This compares the quantity of specified tags against a specified quantity given 
 }
 ```
 
+# Using multiple rules
+
+An example of a rules array containing multiple predefined rules that can be passed into the defects checker.
+
+```javascript
+const rules = [
+  {
+    definition: new TagsWithoutAttributesRule(),
+    options: [
+      {
+        img: 'alt',
+        a: 'rel',
+      },
+    ],
+  },
+  {
+    definition: new HeaderWithoutTagsRule(),
+    options: [
+      {
+        title: {},
+      },
+      {
+        meta: {
+          name: '"descriptions"',
+        },
+      },
+      {
+        meta: {
+          name: '"keywords"',
+        },
+      },
+      {
+        meta: {
+          name: '"robots"',
+        },
+      },
+    ]
+  },
+  {
+    definition: new TagQuantityComparisonRule(),
+    options: [
+      {
+        comparisonOperator: '>',
+        elementName: 'strong',
+        quantity: 15,
+      },
+      {
+        comparisonOperator: '>',
+        elementName: 'h1',
+        quantity: 1,
+      },
+    ],
+  },
+];
+```
 
 # Input options
 Specify the input source.
@@ -205,6 +260,80 @@ outputOptions = {
 }
 ```
 
+# Example
+*test.js*
+```javascript
+const fs = require('fs');
+const hd = require('@jgch/html-defects.js');
+
+const TagsWithoutAttributesRule = require('./ruleTagsWithoutAttributes.js');
+const HeaderWithoutTagsRule = require('./ruleHeaderWithoutTags.js');
+const TagQuantityComparisonRule = require('./ruleTagQuantityComparison.js');
+
+
+const rules = [
+  {
+    definition: new TagsWithoutAttributesRule(),
+    options: [
+      {
+        img: 'alt',
+        a: 'rel',
+      },
+    ],
+  },
+  {
+    definition: new HeaderWithoutTagsRule(),
+    options: [
+      {
+        title: {},
+      },
+      {
+        meta: {
+          name: '"descriptions"',
+        },
+      },
+      {
+        meta: {
+          name: '"keywords"',
+        },
+      },
+      {
+        meta: {
+          name: '"robots"',
+        },
+      },
+    ]
+  },
+  {
+    definition: new TagQuantityComparisonRule(),
+    options: [
+      {
+        comparisonOperator: '>',
+        elementName: 'strong',
+        quantity: 15,
+      },
+      {
+        comparisonOperator: '>',
+        elementName: 'h1',
+        quantity: 1,
+      },
+    ],
+  },
+];
+
+const inputOptions = {
+  inputMethod: 'file',
+  source: 'test.html',
+};
+
+const outputOptions = {
+  outputMethod: 'file',
+  destination: 'results.txt',
+};
+
+hd.checkDefects(rules, inputOptions, outputOptions);
+```
+
 # Extending custom rules
 Create a custom rule by defining a Rule class that implements the checkRule(input, options) method which returns an output string. This class must be instantiated within each rule within the rule object.
 
@@ -215,7 +344,7 @@ To make it easier to implement a custom rule, you are free to define the structu
 The input argument is an array of objects, and each object represents a parsed HTML tag.
 
 The object consists of the following keys:
-```
+```javascript
 elementName
 attributes
 closingTag
@@ -225,7 +354,7 @@ To illustrate this with some examples:
 
 `<html>`
 is parsed into
-```
+```javascript
 {
     elementName: 'html',
     attributes: {}
@@ -234,7 +363,7 @@ is parsed into
 
 `</head>`
 is parsed into
-```
+```javascript
 {
     elementName: 'head',
     attributes: {},
@@ -244,7 +373,7 @@ is parsed into
 
 `<img src="hello.jpg" alt="hello" />`
 is parsed into 
-```
+```javascript
 {
     selfClosingTag: true,
     elementName: 'img',
@@ -258,7 +387,7 @@ is parsed into
 
 `<span data-node class="c1 c2">`
 is parsed into
-```
+```javascript
 {
     elementName: 'span',
     attributes: {
@@ -277,7 +406,7 @@ The each option object will contain details specific to each *variation* of the 
 
 For example, in our 'tagsWithoutAttributes' rule, we specified the following options: 
 
-```
+```javascript
 [
     {
         img: 'alt',
@@ -305,21 +434,21 @@ We can turn this abstraction into a concrete option by allowing the user to spec
 
 A concrete object representing this abstraction could look like:
 
-```
+```javascript
 {
     name: 'html'
 }
 ```
 
 and another variation could look like:
-```
+```javascript
 {
     name: 'div'
 }
 ```
 
 We can create an options array to hold these two concrete variants:
-```
+```javascript
 options: [
     {
         name: 'html'
@@ -377,7 +506,7 @@ module.exports = class EqualNumberOfOpeningClosingTagsRule {
 
 ## Using our rule class
 *exampleUsage.js*
-```
+```javascript
 const hd = require('@jgch/html-defects');
 
 const EqualNumberOfOpeningClosingTagsRule = require('./ruleEqualNumberOfOpeningClosingTags.js');

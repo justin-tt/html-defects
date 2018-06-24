@@ -359,7 +359,7 @@ const checkDefects = function checkDefects(rules, inputOptions, outputOptions) {
     const checker = new RuleChecker();
     for (const rule of rules) {
     // for (const rule of Object.keys(rules)) {
-      checker.setRule(rule.rule);
+      checker.setRule(rule.definition);
       output += checker.runRule(input, rule.options);
       output += '\n';
     }

@@ -7,74 +7,121 @@ npm install --save @jgch/html-defects
 # Getting started
 
 ```javascript
+// The defect checker module
 const hd = require('@jgch/html-defects');
 
-const rules = {
-    tagsWithoutAttributes: [
-		{
-			img: 'alt',
-		},
-		{
-			a: 'rel',
-		},
-	],
+// The rule classes
+const TagsWithoutAttributesRule = require('./ruleTagsWithoutAttributes.js');
+
+// Instantiating the rules with options
+const rules = [
+  {
+    definition: new TagsWithoutAttributesRule(),
+    options: [
+      {
+        img: 'alt',
+      },
+      {
+        a: 'rel',
+      },
+    ],
+  },
+];
+
+// Specifying input method and source
+const inputOptions = {
+  inputMethod: 'string',
+  source: '<html><img src="foo.jpg" /></html>',
 };
 
-const inputOptions = {
-	inputMethod: 'string',
-	source: '<html><img src="foo.jpg" /></html>',
-	
-}
-
+// Specifying output method and destination
 const outputOptions = {
-	outputMethod: 'console'
-}
+  outputMethod: 'console',
+};
 
 hd.checkDefects(rules, inputOptions, outputOptions);
 ```
 
 # Rules
-The rules object can have any of these keys:
-1. tagsWithoutAttributes
-2. headerWithoutTags
-3. tagQuantityComparison
+## Creating the rules array
+You can define as many rules and their respective options within an array, which will be passed into the defect checker module.
 
-Each rule key contains an array of options.
+Each rule within the rules array is a rule object with two properties:
+1. definition
+2. options
 
+```
+  {
+    definition: new TagsWithoutAttributesRule(),
+    options: [
+      {
+        img: 'alt',
+      },
+      {
+        a: 'rel',
+      },
+    ],
+  },
+```
+
+## definition
+The definition instantiates a predefined rule class.
+
+This package comes with 4 predefined rule classes:
+1. TagsWithoutAttributesRule
+2. HeaderWithoutTagsRule
+3. TagQuantityComparisonRule
+4. EqualNumberOfOpeningClosingTagsRule (see creating custom rules section)
+
+You can examine the source code for each of these rule classes, e.g. ruleTagsWithoutAttributes.js if you wish to modify its implementation.
+
+## options
+The options key consists of an array with individual option objects. The structure of these options depends on the corresponding rule classes.
+
+# Using predefined rules
 ## Tags without attributes
 This counts the number of tags that do not have a specified attribute.
 
+Option usage:
+
 ```javascript
 // Look for <a> tags that do not contain *rel* attribute.
-tagsWithoutAttributes: [
-	{
-		a: 'rel'
-	}
-]
+{
+    definition: new TagsWithoutAttributesRule(),
+    options: [
+    	{
+    		a: 'rel',
+    	},
+    ],
+}
 ```
 
 ## Header not containing tags
 This shows if specified tags are missing in the HTML header.
 
 ```javascript
+// This example uses 3 different option objects to run the same rule with different variations.
 // Check for missing <title> tags,
 // missing <meta name="descriptions"> tags
 // and missing <meta name="keywords"> tags.
-headerWithoutTags: [
-	{
-		title: {}
-	},
-	{
-		meta: {
-			name: '"descriptions"', // observe the quotation marks!
-		}
-	},
-	{
-		meta: {
-			name: '"keywords"',
-		}
-	}
-]
+{
+    definition: new HeaderWithoutTagsRule(),
+    options: [
+    	{
+    		title: {}
+    	},
+    	{
+    		meta: {
+    			name: '"descriptions"', // observe the quotation marks!
+    		}
+    	},
+    	{
+    		meta: {
+    			name: '"keywords"',
+    		}
+    	}
+    ]
+}
 ```
 
 ## Tag Quantity Comparison
@@ -83,19 +130,24 @@ This compares the quantity of specified tags against a specified quantity given 
 ```javascript
 // Check if there are more than 15 <strong> tags,
 // and check if there is more than 1 <h1> tag.
-tagQuantityComparison: [
-	{
-		comparisonOperator: '>',
-		elementName: 'strong',
-		quantity: 15,
-	},
-	{
-		comparisonOperator: '>',
-		elementName: 'h1',
-		quantity: 1,
-	}
-]
+{
+    definition: new TagQuantityComparisonRule(),
+    options: [
+    	{
+    		comparisonOperator: '>',
+    		elementName: 'strong',
+    		quantity: 15,
+    	},
+    	{
+    		comparisonOperator: '>',
+    		elementName: 'h1',
+    		quantity: 1,
+    	}
+    ]
+}
 ```
+
+
 # Input options
 Specify the input source.
 ## HTML File
@@ -103,7 +155,7 @@ Specify the input source.
 // To read from a file.
 inputOptions = {
 	inputMethod: 'file',
-	source: 'foo.html'
+	source: 'foo.html',
 }
 ```
 ## Readable Stream
@@ -112,7 +164,15 @@ inputOptions = {
 const readableStream = fs.createReadStream('test.html');
 inputOptions = {
 	inputMethod: 'stream',
-	source: readableStream
+	source: readableStream,
+}
+```
+## String
+```javascript
+// Read from a html string.
+inputOptions = {
+    inputMethod: 'string',
+    source: '<html></html>',
 }
 ```
 
@@ -141,12 +201,9 @@ outputOptions = {
 const writableStream = fs.createWriteStream('defectsStream.txt')
 outputOptions = {
 	outputMethod: 'stream',
-	destination: writableStream
+	destination: writableStream,
 }
 ```
-
-# Test
-Check out test.js (within /node_modules/@jgch/html-defects) for more examples.
 
 # Extending custom rules
 Create a custom rule by defining a Rule class that implements the checkRule(input, options) method which returns an output string. This class must be instantiated within each rule within the rule object.
@@ -261,7 +318,7 @@ and another variation could look like:
 }
 ```
 
-We can create an options array to hold these two variants:
+We can create an options array to hold these two concrete variants:
 ```
 options: [
     {
@@ -284,35 +341,68 @@ We need to implement the checkRule method, which gives us access to the input an
 
 Loop over each of the variations in the array, and count the number of each element and its opening/closing tags using the Array.prototype.filter method.
 
-Add output text.
+Add output text to show if the tag counts match or mismatch.
 
-```
-class EqualNumberOfOpeningClosingTagsRule {
-    checkRule(input, options) {
-        let output = '';
-        output += `Checking that elements have equal numbers of opening and closing tags\n`;
+*ruleEqualNumberOfClosingOpeningTags.js*
+```javascript
+// create rule class as a module
+module.exports = class EqualNumberOfOpeningClosingTagsRule {
+  checkRule(input, options) {
+    let output = '';
+    output += `Checking that elements have equal numbers of opening and closing tags\n`;
 
-        // iterate over each option object within options
-        // array for each variation of the rule
-        for (const option of options) {
-            const elementName = option.name;
-            const openingTagCount = input.filter(tag => (
-                tag.elementName === elementName && !tag.closingTag
-            )).length;
-            const closingTagCount = input.filter(tag => (
-                tag.elementName === elementName && tag.closingTag
-            )).length;
+    // iterate over each option object within options
+    // array for each variation of the rule
+    for (const option of options) {
+      const elementName = option.name;
+      const openingTagCount = input.filter(tag => (
+        tag.elementName === elementName && !tag.closingTag
+      )).length;
+      const closingTagCount = input.filter(tag => (
+        tag.elementName === elementName && tag.closingTag
+      )).length;
 
-            if (openingTagCount !== closingTagCount) {
-                output += `Unequal counts of opening and closing tags for <${elementName}>\n`;
-                output += `Opening: ${openingTagCount}\n`;
-                output += `Closing: ${closingTagCount}\n`;
-            }
-        }
-
-        return output;
+      if (openingTagCount !== closingTagCount) {
+        output += `Unequal counts of opening and closing tags for <${elementName}>\n`;
+        output += `Opening: ${openingTagCount}\n`;
+        output += `Closing: ${closingTagCount}\n`;
+      }
     }
+
+    return output;
+  }
 }
 ```
 
-## Defining the rules object
+## Using our rule class
+*exampleUsage.js*
+```
+const hd = require('@jgch/html-defects');
+
+const EqualNumberOfOpeningClosingTagsRule = require('./ruleEqualNumberOfOpeningClosingTags.js');
+
+const rules = [
+  {
+    definition: new EqualNumberOfOpeningClosingTagsRule(),
+    options: [
+      {
+        name: 'html',
+      },
+      {
+        name: 'div',
+      },
+    ],
+  },
+];
+
+const inputOptions = {
+  inputMethod: 'string',
+  source: '<html><head><meta name="descriptions"><meta charset="utf-8"></head><span data-node class="c1 c2"><img src="hello.jpg" /><img src="hello.jpg" alt="hello"/></span><span>Hello i\'m a "test"</span><div></html>',
+};
+
+const outputOptions = {
+  outputMethod: 'console',
+};
+
+hd.checkDefects(rules, inputOptions, outputOptions);
+```

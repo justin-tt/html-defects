@@ -1,0 +1,11 @@
+Checking 'tags without attributes' rule:
+<img> tags without alt attribute: 1
+<a> tags without rel attribute: 2
+
+Checking 'header without tags' rule:
+Header tag does not have <title>
+Header tag does not have <meta name="keywords">
+Header tag does not have <meta name="robots">
+
+Checking 'tag quantity comparison' rule:
+

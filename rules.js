@@ -5,7 +5,7 @@ const TagQuantityComparisonRule = require('./ruleTagQuantityComparison.js');
 
 module.exports = [
   {
-    rule: new EqualNumberOfClosingOpeningTagsRule(),
+    definition: new EqualNumberOfClosingOpeningTagsRule(),
     options: [
         {
             name: 'html'
@@ -16,7 +16,7 @@ module.exports = [
     ]
   },
   {
-    rule: new HeaderWithoutTagsRule(),
+    definition: new HeaderWithoutTagsRule(),
     options: [
       {
         meta: {
